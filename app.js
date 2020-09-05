@@ -26,7 +26,7 @@ app.listen(app.get("port"), () => {
 });
 
 app.get("/", (request, response) => {
-    response.send("Connected to cocktails API");
+    response.send("Connected to cocktailsAPI");
 });
 
 app.get("/allcocktails", (request, response) => {
@@ -57,4 +57,3 @@ app.get("/cocktails/ingredient/", (request, response) => {
         response.send(result);
     });
 });
-//zyyEaINEcdDGaz8U
