@@ -25,6 +25,9 @@ app.listen(app.get("port"), () => {
     });
 });
 
+app.get("/", (request, response) => {
+    response.send("Connected to cocktails API");
+});
 
 app.get("/allcocktails", (request, response) => {
     collection.find({}).toArray((error, result) => {
