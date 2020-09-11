@@ -1,6 +1,7 @@
 const Express = require("express");
 const BodyParser = require("body-parser");
 const MongoClient = require("mongodb").MongoClient;
+const getColors = require('get-image-colors');
 require("dotenv").config();
 
 const { PORT, DATABASE_NAME, COLLECTION_NAME, BASE_URL, MONGO_USER, MONGO_PASSWORD, CLUSTER_URL } = process.env;
@@ -45,16 +46,18 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
 })
 //Search by drink name
 .get("/cocktails/drink/", (request, response) => {
-    let normalize = [];
-    queryDb({"drink": request.query.drink})
-      .then(resp => {
-        resp.forEach(elem => {
-          let _drink = new  Drink(elem);
+  let normalize = [];
+  queryDb({"drink": request.query.drink})
+    .then(resp => {
+      resp.forEach(elem => {
+        getColors(elem.drink_thumb).then(color => {
+          let _drink = new  Drink(elem, color[0]);
           normalize.push(_drink);
         });
-            return response.json(normalize);
-      })
-      .catch(err => response.status(500).send(err));
+      });
+          return response.json(normalize);
+    })
+    .catch(err => response.status(500).send(err));
 })
 .get("/cocktails/drink-search/", (request, response) => {
     let reg = new RegExp(`.*${request.query.drink}.*`, 'i');
@@ -87,7 +90,7 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
 
 
 class Drink {
-  constructor(data) {
+  constructor(data, color) {
       this.drink = data.drink;
       this.drink_id = data.drink_id;
       this.alcoholic = data.alcoholic;
@@ -99,6 +102,7 @@ class Drink {
       this.instructions = data.instructions;
       this.measurement = data.measurement;
       this.video = data.video;
+      this.color = color;
   }
   data(){
       return {
@@ -112,7 +116,8 @@ class Drink {
           "ingredients": this.ingredients,
           "instructions": this.instructions,
           "measurement": this.measurement,
-          "video": this.video
+          "video": this.video,
+          "color": this.color
       }
   }
 }
