@@ -48,16 +48,14 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
 .get("/cocktails/drink/", (request, response) => {
   let normalize = [];
   queryDb({"drink": request.query.drink})
-    .then(resp => {
-      resp.forEach(elem => {
-        getColors(elem.drink_thumb).then(color => {
-          let _drink = new  Drink(elem, color[0]);
-          normalize.push(_drink);
-        });
-      });
-          return response.json(normalize);
-    })
-    .catch(err => response.status(500).send(err));
+  .then(resp => {
+    resp.forEach(elem => {
+      let _drink = new  Drink(elem, null);
+      normalize.push(_drink);
+    });
+        return response.json(normalize);
+  })
+  .catch(err => response.status(500).send(err));
 })
 .get("/cocktails/drink-search/", (request, response) => {
     let reg = new RegExp(`.*${request.query.drink}.*`, 'i');
