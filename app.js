@@ -13,7 +13,7 @@ const queryDb = query => {
         {useNewUrlParser: true, useUnifiedTopology: true})
         .then(client => {
           const db = client.db(DATABASE_NAME);
-          const cursor = db.collection(COLLECTION_NAME).find(query).toArray()
+          const cursor = db.collection(COLLECTION_NAME).find(query).collation( { locale: 'en', strength: 2 } ).toArray()
             .then(response => {
               client.close();
               return resolve(response);
