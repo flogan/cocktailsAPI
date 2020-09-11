@@ -37,21 +37,74 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
 })
 //Search by drink name
 .get("/cocktails/drink/", (request, response) => {
+    let normalize = [];
     queryDb({"drink": request.query.drink})
-        .then(resp => response.json(resp))
-        .catch(err => response.status(500).send(err));
+      .then(resp => {
+        resp.forEach(elem => {
+          let _drink = new  Drink(elem);
+          normalize.push(_drink);
+        });
+            return response.json(normalize);
+      })
+      .catch(err => response.status(500).send(err));
 })
 .get("/cocktails/drink-search/", (request, response) => {
     let reg = new RegExp(`.*${request.query.drink}.*`, 'i');
+    let normalize = [];
     queryDb({"drink": reg})
-        .then(resp => response.json(resp))
-        .catch(err => response.status(500).send(err));
+      .then(resp => {
+        resp.forEach(elem => {
+          let _drink = new  Drink(elem);
+          normalize.push(_drink);
+        });
+            return response.json(normalize);
+      })
+      .catch(err => response.status(500).send(err));
 })
 // get by ingredient
 .get("/cocktails/ingredient/", (request, response) => {
+    let normalize = [];
     queryDb({"ingredients": request.query.ingredient})
-    .then(resp => response.json(resp))
-    .catch(err => response.status(500).send(err));
+      .then(resp => {
+        resp.forEach(elem => {
+          let _drink = new  Drink(elem);
+          normalize.push(_drink);
+        });
+            return response.json(normalize);
+      })
+      .catch(err => response.status(500).send(err));
 })
 .get('*', (req, res) => res.redirect('/'))
 .listen(port, () => console.log(`server started at http://localhost:${ port }`));
+
+
+class Drink {
+  constructor(data) {
+      this.drink = data.drink;
+      this.drink_id = data.drink_id;
+      this.alcoholic = data.alcoholic;
+      this.category = data.category;
+      this.drink_thumb = data.drink_thumb;
+      this.glass = data.glass;
+      this.iba = data.iba;
+      this.ingredients = data.ingredients;
+      this.instructions = data.instructions;
+      this.measurement = data.measurement;
+      this.video = data.video;
+  }
+  data(){
+      return {
+          "drink": this.drink,
+          "drink_id": this.drink_id,
+          "alcoholic": this.alcoholic,
+          "category": this.category,
+          "drink_thumb": this.drink_thumb,
+          "glass": this.glass,
+          "iba": this.iba,
+          "ingredients": this.ingredients,
+          "instructions": this.instructions,
+          "measurement": this.measurement,
+          "video": this.video
+      }
+  }
+}
