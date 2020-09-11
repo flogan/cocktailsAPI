@@ -40,7 +40,16 @@ app.get("/allcocktails", (request, response) => {
 
 //Search by drink name
 app.get("/cocktails/drink/", (request, response) => {
-    collection.find({"drink": request.query.drink}).collation( { locale: 'en', strength: 2 } ).toArray((error, result) => {
+    collection.find({"drink": request.query.drink }).collation( { locale: 'en', strength: 2 } ).toArray((error, result) => {
+        if(error) {
+            return response.status(500).send(error);
+        }
+        response.send(result);
+    });
+});
+
+app.get("/cocktails/drink-search/", (request, response) => {
+    collection.find({"drink": { $regex: ".*" + request.query.drink + ".*", $options: "i" } }).toArray((error, result) => {
         if(error) {
             return response.status(500).send(error);
         }
