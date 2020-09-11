@@ -7,6 +7,14 @@ const { PORT, DATABASE_NAME, COLLECTION_NAME, BASE_URL, MONGO_USER, MONGO_PASSWO
 const CONNECTION_URL = `${BASE_URL}${MONGO_USER}:${MONGO_PASSWORD}${CLUSTER_URL}${DATABASE_NAME}?retryWrites=true&w=majority`;
 const port = PORT || 3001;
 
+const { API_KEY, API_CODE } = process.env;
+
+const verify = (req, res, next) => {
+    let { api_key, api_code } = req.headers;
+    if(api_key == API_KEY && api_code == API_CODE) return next();
+    return res.send('not authorized');
+}
+
 const queryDb = query => {
     return new Promise((resolve, reject) => {
       MongoClient.connect(CONNECTION_URL,
@@ -30,7 +38,7 @@ const app = Express()
 // routes
 app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
 // get all
-.get("/allcocktails", (request, response) => {
+.get("/allcocktails", verify, (request, response) => {
     queryDb({})
         .then(resp => response.json(resp))
         .catch(err => response.status(500).send(err));
