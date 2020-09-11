@@ -1,68 +1,57 @@
 const Express = require("express");
 const BodyParser = require("body-parser");
 const MongoClient = require("mongodb").MongoClient;
-const ObjectId = require("mongodb").ObjectID;
 require("dotenv").config();
 
-const DATABASE_NAME = process.env.DATABASE_NAME;
-const COLLECTION_NAME = process.env.COLLECTION_NAME;
-const CONNECTION_URL = process.env.BASE_URL + process.env.MONGO_USER + ':' + process.env.MONGO_PASSWORD + process.env.CLUSTER_URL + DATABASE_NAME + '?retryWrites=true&w=majority';
+const { PORT, DATABASE_NAME, COLLECTION_NAME, BASE_URL, MONGO_USER, MONGO_PASSWORD, CLUSTER_URL } = process.env;
+const CONNECTION_URL = `${BASE_URL}${MONGO_USER}:${MONGO_PASSWORD}${CLUSTER_URL}${DATABASE_NAME}?retryWrites=true&w=majority`;
+const port = PORT || 3001;
 
-var app = Express();
-app.use(BodyParser.json());
-app.use(BodyParser.urlencoded({ extended: true }));
-app.set("port", process.env.PORT || 3001);
-var database, collection;
-
-app.listen(app.get("port"), () => {
-    MongoClient.connect(CONNECTION_URL, { useNewUrlParser: true }, { useUnifiedTopology: true }, (error, client) => {
-        if(error) {
-            throw error;
-        }
-        database = client.db(DATABASE_NAME);
-        collection = database.collection(COLLECTION_NAME);
-        console.log("Connected to `" + DATABASE_NAME + "`!");
+const queryDb = query => {
+    return new Promise((resolve, reject) => {
+      MongoClient.connect(CONNECTION_URL,
+        {useNewUrlParser: true, useUnifiedTopology: true})
+        .then(client => {
+          const db = client.db(DATABASE_NAME);
+          const cursor = db.collection(COLLECTION_NAME).find(query).toArray()
+            .then(response => {
+              client.close();
+              return resolve(response);
+            })
+        })
+        .catch(error => reject(error));
     });
-});
+};
 
-app.get("/", (request, response) => {
-    response.send("Connected to cocktailsAPI");
-});
-
-app.get("/allcocktails", (request, response) => {
-    collection.find({}).toArray((error, result) => {
-        if(error) {
-            return response.status(500).send(error);
-        }
-        response.send(result);
-    });
-});
-
+const app = Express()
+.use(BodyParser.json())
+.use(BodyParser.urlencoded({ extended: true }))
+.set('json spaces', 2);
+// routes
+app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
+// get all
+.get("/allcocktails", (request, response) => {
+    queryDb({})
+        .then(resp => response.json(resp))
+        .catch(err => response.status(500).send(err));
+})
 //Search by drink name
-app.get("/cocktails/drink/", (request, response) => {
-    collection.find({"drink": request.query.drink }).collation( { locale: 'en', strength: 2 } ).toArray((error, result) => {
-        if(error) {
-            return response.status(500).send(error);
-        }
-        response.send(result);
-    });
-});
-
-app.get("/cocktails/drink-search/", (request, response) => {
-    collection.find({"drink": { $regex: ".*" + request.query.drink + ".*", $options: "i" } }).toArray((error, result) => {
-        if(error) {
-            return response.status(500).send(error);
-        }
-        response.send(result);
-    });
-});
-
-//Search by ingredient
-app.get("/cocktails/ingredient/", (request, response) => {
-    collection.find({"ingredients": { $all: [request.query.ingredient] } }).collation( { locale: 'en', strength: 2 } ).toArray((error, result) => {
-        if(error) {
-            return response.status(500).send(error);
-        }
-        response.send(result);
-    });
-});
+.get("/cocktails/drink/", (request, response) => {
+    queryDb({"drink": request.query.drink})
+        .then(resp => response.json(resp))
+        .catch(err => response.status(500).send(err));
+})
+.get("/cocktails/drink-search/", (request, response) => {
+    let reg = new RegExp(`.*${request.query.drink}.*`, 'i');
+    queryDb({"drink": reg})
+        .then(resp => response.json(resp))
+        .catch(err => response.status(500).send(err));
+})
+// get by ingredient
+.get("/cocktails/ingredient/", (request, response) => {
+    queryDb({"ingredients": request.query.ingredient})
+    .then(resp => response.json(resp))
+    .catch(err => response.status(500).send(err));
+})
+.get('*', (req, res) => res.redirect('/'))
+.listen(port, () => console.log(`server started at http://localhost:${ port }`));
