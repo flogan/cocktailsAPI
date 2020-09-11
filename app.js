@@ -65,7 +65,7 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
     queryDb({"drink": reg})
       .then(resp => {
         resp.forEach(elem => {
-          let _drink = new  Drink(elem);
+          let _drink = new  Drink(elem, null);
           normalize.push(_drink);
         });
             return response.json(normalize);
@@ -78,7 +78,7 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
     queryDb({"ingredients": request.query.ingredient})
       .then(resp => {
         resp.forEach(elem => {
-          let _drink = new  Drink(elem);
+          let _drink = new  Drink(elem, null);
           normalize.push(_drink);
         });
             return response.json(normalize);
