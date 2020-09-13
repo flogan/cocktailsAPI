@@ -10,6 +10,14 @@ const port = PORT || 3001;
 
 const { API_KEY, API_CODE } = process.env;
 
+const colors = url => {
+    return new Promise((resolve, reject) => {
+        getColors(url).then(color => {
+            return resolve(color[0]._rgb);
+        }).catch(error => reject(error));
+    });
+};
+
 const verify = (req, res, next) => {
     let { api_key, api_code } = req.headers;
     if(api_key == API_KEY && api_code == API_CODE) return next();
@@ -47,45 +55,47 @@ app.get("/", (request, response) => response.send("Connected to cocktailsAPI"))
 //Search by drink name
 .get("/cocktails/drink/", (request, response) => {
   let normalize = [];
-  queryDb({"drink": request.query.drink})
-  .then(resp => {
+  queryDb({"drink": request.query.drink}).then(resp => {
     resp.forEach(elem => {
-      let _drink = new  Drink(elem, null);
-      normalize.push(_drink);
+        colors(elem.drink_thumb).then(color => {
+            let _drink = new  Drink(elem, color);
+            normalize.push(_drink);
+        });
     });
-        return response.json(normalize);
+    return response.json(normalize);
   })
   .catch(err => response.status(500).send(err));
 })
 .get("/cocktails/drink-search/", (request, response) => {
     let reg = new RegExp(`.*${request.query.drink}.*`, 'i');
     let normalize = [];
-    queryDb({"drink": reg})
-      .then(resp => {
+    queryDb({"drink": reg}).then(resp => {
         resp.forEach(elem => {
-          let _drink = new  Drink(elem, null);
-          normalize.push(_drink);
+            colors(elem.drink_thumb).then(color => {
+                let _drink = new  Drink(elem, color);
+                normalize.push(_drink);
+            });
         });
-            return response.json(normalize);
-      })
-      .catch(err => response.status(500).send(err));
+    return response.json(normalize);
+    })
+    .catch(err => response.status(500).send(err));
 })
 // get by ingredient
 .get("/cocktails/ingredient/", (request, response) => {
     let normalize = [];
-    queryDb({"ingredients": request.query.ingredient})
-      .then(resp => {
+    queryDb({"ingredients": request.query.ingredient}).then(resp => {
         resp.forEach(elem => {
-          let _drink = new  Drink(elem, null);
-          normalize.push(_drink);
+            colors(elem.drink_thumb).then(color => {
+                let _drink = new  Drink(elem, color);
+                normalize.push(_drink);
+            });
         });
-            return response.json(normalize);
-      })
-      .catch(err => response.status(500).send(err));
+    return response.json(normalize);
+    })
+    .catch(err => response.status(500).send(err));
 })
 .get('*', (req, res) => res.redirect('/'))
 .listen(port, () => console.log(`server started at http://localhost:${ port }`));
-
 
 class Drink {
   constructor(data, color) {
