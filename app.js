@@ -33,6 +33,7 @@ const queryDb = query => {
 };
 
 const app = Express()
+.disable("x-powered-by")
 .use(BodyParser.json())
 .use(BodyParser.urlencoded({ extended: true }))
 .set('json spaces', 2);
